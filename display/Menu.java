@@ -1,31 +1,30 @@
 package display;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.event.ChangeListener;
-
 import java.awt.event.*;
 import java.awt.*;
 import java.util.Hashtable;
-import javax.swing.event.*;
 
 @SuppressWarnings("serial") 
 public class Menu extends JPanel {
     public static final int width = 400;
     public static final int height = 1000;
 
-    JPanel SliderPanel, EmptyPanel;
-    JButton TimePlusButton, TimeMinusButton, ThreadPlusButton, ThreadMinusButton, MassPlusButton, MassMinusButton;
-    JSlider TimeSlider, MassSlider;
-    JLabel  GeneralLabel, ThreadsLabel, TimeLabel, MassLabel;
-    JTextField MassTextField;
-
+    JPanel SliderPanel;
+    JButton TimePlusButton, TimeMinusButton, ThreadPlusButton, ThreadMinusButton, MassPlusButton, MassMinusButton,
+            PresetCicrle, PresetSpiral, PresetFireworks, PresetGrid;
+    JSlider TimeSlider, MassSlider, /*Presets->*/ PlanetsAmount, PlanetsSizeRandom, PlanetsInitialSpeed;
+    JLabel  GeneralLabel, MassLabel, ThreadsLabel, TimeLabel;
+    JTextField MassTextField, ThreadsTextField, TimeTextField;
+    JTextArea LiveLog;
     Box GeneralBox;
 
-    int timevalue=0, threads=0, mass=0, mass_range=1000;
+    int timevalue=0, threads=1, mass=0, mass_range=1000;
  
     public Menu()
     {
-        EmptyPanel = new JPanel();
         setPreferredSize(new Dimension(width, height));
         GeneralBox = Box.createVerticalBox();
         setBorder(BorderFactory.createTitledBorder("Main Menu:"));
@@ -33,29 +32,34 @@ public class Menu extends JPanel {
         setTimeOptions();
         setThreadOptions();
         setMassOptions();
+        setPresetButtons();
+        setEventLog();
+        GeneralBox.add(Box.createVerticalStrut(10));
 
         this.add(GeneralBox);
     }
 
-    protected void paintComponent(Graphics g)
+    /*protected void paintComponent(Graphics g)
     {
         super.paintComponent(g);
         //TimeLabel.repaint();
-    }
+    }*/
 
     private void setTimeOptions()
     {           
-        JPanel TimeBoxH = new JPanel();                                   //  +====== vertical  box ======+
-        Box TimeBoxV = Box.createVerticalBox();                           //  |       |  h. box1 |        |
-        TimePlusButton = new JButton("Time++");                           //  +---------------------------+             
-        TimeMinusButton = new JButton("Time--");                          //  |           Slider          |
-        TimeLabel = new JLabel(" 0 ");                                    //  +---------------------------+
+        JPanel TimeBoxH = new JPanel();                                 
+        Box TimeBoxV = Box.createVerticalBox();                           
+        TimePlusButton = new JButton("Time++");                    
+        TimeMinusButton = new JButton("Time--"); 
+        TimeLabel = new JLabel("Actual Time: ");
+        TimeTextField = new JTextField("0     ");                                   
         TimeSlider = new JSlider(0, 20, 0);
 
         TimePlusButton.addActionListener(new TimePlusListener());
         TimeMinusButton.addActionListener(new TimeMinusListener());
         TimeSlider.addChangeListener(new TimeSliderListener());
 
+        TimeTextField.setEditable(false);
         TimeBoxH.setLayout(new BoxLayout(TimeBoxH, BoxLayout.X_AXIS));
 
         TimeMinusButton.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -63,6 +67,7 @@ public class Menu extends JPanel {
         TimeBoxH.add(Box.createHorizontalStrut(50));
         TimeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         TimeBoxH.add(TimeLabel);
+        TimeBoxH.add(TimeTextField);
         TimeBoxH.add(Box.createHorizontalStrut(50));
         TimePlusButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
         TimeBoxH.add(TimePlusButton);
@@ -86,31 +91,33 @@ public class Menu extends JPanel {
 
     private void setThreadOptions()
     {
-        JPanel ThreadBox  = new JPanel(new GridLayout(1, 3));
+        JPanel ThreadBox  = new JPanel();
         ThreadPlusButton = new JButton("Thread++");
         ThreadMinusButton = new JButton("Thread--");
-        ThreadsLabel = new JLabel("Threads: 0");
+        ThreadsLabel = new JLabel("Threads: ");
+        ThreadsTextField = new JTextField("1");
 
         ThreadPlusButton.addActionListener(new ThreadPlusListener());
         ThreadMinusButton.addActionListener(new ThreadMinusListener());
 
         ThreadBox.setLayout(new BoxLayout(ThreadBox, BoxLayout.X_AXIS));
+        ThreadsTextField.setEditable(false);
 
-        ThreadBox.add(EmptyPanel); 
         ThreadBox.add(ThreadMinusButton);
         ThreadBox.add(Box.createHorizontalStrut(20));
         ThreadBox.add(ThreadsLabel);
+        ThreadBox.add(ThreadsTextField);
         ThreadBox.add(Box.createHorizontalStrut(20));
         ThreadBox.add(ThreadPlusButton);
 
         GeneralBox.add(ThreadBox);
-        GeneralBox.add(Box.createVerticalStrut(60));
+        GeneralBox.add(Box.createVerticalStrut(20));
     }
 
     private void setMassOptions()
     {
         Box MassBoxV = Box.createVerticalBox();
-        JPanel MassBoxH  = new JPanel(new GridLayout(1, 4));
+        JPanel MassBoxH  = new JPanel();
         MassPlusButton = new JButton("Mass++");
         MassMinusButton = new JButton("Mass--");
         MassLabel = new JLabel(" E20 [KG]");
@@ -124,7 +131,6 @@ public class Menu extends JPanel {
 
         MassBoxH.setLayout(new BoxLayout(MassBoxH, BoxLayout.X_AXIS));
 
-        MassBoxH.add(EmptyPanel); 
         MassBoxH.add(MassMinusButton);
         MassBoxH.add(Box.createHorizontalStrut(10));
         MassBoxH.add(MassTextField);
@@ -133,7 +139,7 @@ public class Menu extends JPanel {
         MassBoxH.add(MassPlusButton);
 
         MassBoxV.add(MassBoxH);
-        MassBoxV.add(Box.createVerticalStrut(20));
+        MassBoxV.add(Box.createVerticalStrut(10));
 
         MassSlider.setMinorTickSpacing(mass_range/100);
         MassSlider.setMajorTickSpacing(mass_range/10);
@@ -146,14 +152,98 @@ public class Menu extends JPanel {
         MassSlider.setPaintLabels(true);
         MassSlider.setValue(580);
 
-        SliderPanel = new JPanel(new GridLayout(3, 1, 10, 10));
-        SliderPanel.add(EmptyPanel);
+        SliderPanel = new JPanel(new GridLayout(1, 1, 0, 0));
         SliderPanel.add(MassSlider);
-        SliderPanel.add(EmptyPanel);
         MassBoxV.add(SliderPanel);
 
         GeneralBox.add(MassBoxV);
         GeneralBox.add(Box.createVerticalStrut(20));
+    }
+
+    private void setPresetButtons()
+    {
+        JPanel PresetsPanel = new JPanel();
+        PresetsPanel.setBorder(BorderFactory.createTitledBorder("Presets:"));
+        PresetsPanel.setLayout(new BoxLayout(PresetsPanel, BoxLayout.X_AXIS));
+        Box VpresetBox = Box.createVerticalBox();
+        PresetCicrle =      new JButton("Circles");
+        PresetSpiral =      new JButton("Spiral");
+        PresetFireworks =   new JButton("Fireworks");
+        PresetGrid =        new JButton("Grid");
+
+        PlanetsAmount =         new JSlider(JSlider.VERTICAL, 0, 100, 30);
+        PlanetsSizeRandom =     new JSlider(JSlider.VERTICAL, 0, 100, 30);
+        PlanetsInitialSpeed =   new JSlider(JSlider.VERTICAL, 0, 200, 60);
+
+        PlanetsAmount.setPaintLabels(true);
+        PlanetsSizeRandom.setPaintLabels(true);
+        PlanetsInitialSpeed.setPaintLabels(true);
+
+        Hashtable<Integer,JLabel> PlanetsAmountLabel = new Hashtable<>();
+        PlanetsAmountLabel.put( 0, new JLabel("0 Planets") );
+        PlanetsAmountLabel.put( 50, new JLabel("Quantity") );
+        PlanetsAmountLabel.put( 100, new JLabel("100 Planets") );
+        PlanetsAmount.setLabelTable( PlanetsAmountLabel );
+
+        Hashtable<Integer,JLabel> PlanetsRandomLabel = new Hashtable<>();
+        PlanetsRandomLabel.put( 0, new JLabel("0%") );
+        PlanetsRandomLabel.put( 50, new JLabel("Procentage ") );
+        PlanetsRandomLabel.put( 100, new JLabel("100%") );
+        PlanetsSizeRandom.setLabelTable( PlanetsRandomLabel );
+
+        Hashtable<Integer,JLabel> PlanetsSpeedLabel = new Hashtable<>();
+        PlanetsSpeedLabel.put( 0, new JLabel("0 [KM/h]") );
+        PlanetsSpeedLabel.put( 100, new JLabel("Speed") );
+        PlanetsSpeedLabel.put( 200, new JLabel("200 [KM/h]") );
+        PlanetsInitialSpeed.setLabelTable( PlanetsSpeedLabel );
+
+        PresetCicrle.addActionListener(new PresetCirclesListener());
+        PresetSpiral.addActionListener(new PresetSpiralListener());
+        PresetGrid.addActionListener(new PresetGridListener());
+        PresetFireworks.addActionListener(new PresetFireworksListener());
+
+        VpresetBox.add(PresetCicrle);
+        VpresetBox.add(Box.createVerticalStrut(20));
+        VpresetBox.add(PresetSpiral);
+        VpresetBox.add(Box.createVerticalStrut(20));
+        VpresetBox.add(PresetGrid);
+        VpresetBox.add(Box.createVerticalStrut(20));
+        VpresetBox.add(PresetFireworks);
+        VpresetBox.add(Box.createVerticalStrut(20));
+
+        PresetsPanel.add(VpresetBox);
+        PresetsPanel.add(Box.createHorizontalStrut(20));
+        PresetsPanel.add(PlanetsAmount);
+        PresetsPanel.add(PlanetsSizeRandom);
+        PresetsPanel.add(PlanetsInitialSpeed);
+
+        GeneralBox.add(PresetsPanel);
+        GeneralBox.add(Box.createVerticalStrut(20));
+    }
+
+    private void setEventLog()
+    {
+        JPanel LogPanel = new JPanel();
+        LogPanel.setBorder(BorderFactory.createTitledBorder("Events log:"));
+        LogPanel.setLayout(new BoxLayout(LogPanel, BoxLayout.Y_AXIS));
+
+        LiveLog = new JTextArea();
+        //LiveLog.setPreferredSize(new Dimension (30,30));
+        LiveLog.setText("LiveLog activated!\n");
+        LiveLog.setLineWrap(true);
+        LiveLog.setWrapStyleWord(true);
+        JScrollPane scrollbar = new JScrollPane(LiveLog, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollbar.setPreferredSize(new Dimension (150,200));
+
+        LogPanel.add(scrollbar);
+        GeneralBox.add(LogPanel);
+        GeneralBox.add(Box.createVerticalStrut(20));
+    }
+
+    public void printOnLog(String message)
+    {
+        LiveLog.append(message+"\n");
+        LiveLog.setCaretPosition(LiveLog.getDocument().getLength());
     }
 
     class TimePlusListener implements ActionListener
@@ -161,7 +251,7 @@ public class Menu extends JPanel {
         public void actionPerformed(ActionEvent e)
         {
             timevalue++;
-            TimeLabel.setText(" "+timevalue+" ");
+            TimeTextField.setText(" "+timevalue+" ");
             TimeSlider.setValue(timevalue);
         }
     }
@@ -169,8 +259,9 @@ public class Menu extends JPanel {
     {
         public void actionPerformed(ActionEvent e)
         {
-            timevalue--;
-            TimeLabel.setText(" "+timevalue+" ");
+            if(timevalue > 0)
+                 timevalue--;
+            TimeTextField.setText(" "+timevalue+" ");
             TimeSlider.setValue(timevalue);
         }
     }
@@ -179,7 +270,7 @@ public class Menu extends JPanel {
         public void stateChanged(ChangeEvent e)
         {
             timevalue = TimeSlider.getValue();
-            TimeLabel.setText(" "+timevalue+" ");
+            TimeTextField.setText(" "+timevalue+" ");
         }
     }
     class ThreadPlusListener implements ActionListener
@@ -187,15 +278,16 @@ public class Menu extends JPanel {
         public void actionPerformed(ActionEvent e)
         {
             threads++;
-            ThreadsLabel.setText("Threads: "+threads+" ");
+            ThreadsTextField.setText(threads+" ");
         }
     }
     class ThreadMinusListener implements ActionListener
     {
         public void actionPerformed(ActionEvent e)
         {
-            threads--;
-            ThreadsLabel.setText("Threads: "+threads+" ");
+            if(threads > 1)
+                threads--;
+            ThreadsTextField.setText(threads+" ");
         }
     }
     class MassPlusListener implements ActionListener
@@ -237,5 +329,25 @@ public class Menu extends JPanel {
                 mass = MassSlider.getValue();
             }
         }
+    }
+    class PresetCirclesListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {}
+    }
+    class PresetSpiralListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {}
+    }
+    class PresetGridListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {}
+    }
+    class PresetFireworksListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {}
     }
 }

@@ -1,5 +1,6 @@
 import display.Menu;
 import display.SpaceMap;
+import display.shapes.*;
 
 import java.awt.*;
 import javax.swing.*;
@@ -7,6 +8,7 @@ import javax.swing.*;
 @SuppressWarnings("serial") 
 public class Main extends JPanel {
 	public static void main(String[] args) {
+		Arrow ar = new Arrow();
 		SwingUtilities.invokeLater(()->{
 			Main sizingTest = new Main();
 			JFrame frame = new JFrame("Grav Sim 2.0");
