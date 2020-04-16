@@ -3,9 +3,14 @@ package display;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.util.concurrent.Semaphore;
+
+import gravity.GravityManager;
+
 import java.util.ArrayList;
 
 import space_objects.*;
+//import gravity.*;
 
 @SuppressWarnings("serial")
 public class SpaceMap extends JComponent
@@ -20,16 +25,52 @@ public class SpaceMap extends JComponent
 
     Menu myMenu;
 
-    ArrayList<SpaceObject> objectsList;
+    volatile Boolean doReset=false;
+    Semaphore queueSemaphore = new Semaphore(1);
+    ArrayList<SpaceObject> objectsList;  //for ready, printable, read-onlny objects (no semaphore on it)
+    ArrayList<SpaceObject> objectsQueue; //for objects in creation, to avoid printing unready object
 
     public SpaceMap (Menu madeMenu)
     {
         this.myMenu = madeMenu;
-        objectsList = new ArrayList<SpaceObject>();
+
+        objectsList  = new ArrayList<SpaceObject>();    //editable only by GravityManager thread
+        objectsQueue = new ArrayList<SpaceObject>();    //editable only by swing thread
+
+        myMenu.sendGravityManager(new GravityManager(myMenu, this, objectsList));
+
         setPreferredSize(new Dimension(width,height));
         this.addMouseListener(new MapPanelListener(this));
         this.addMouseMotionListener(new MapPanelDrag());
         this.setLayout(null);
+        ResetButtonListener ls = new ResetButtonListener();
+        myMenu.addResetListener(ls);
+    }
+
+    public synchronized ArrayList<SpaceObject> updateMergeGet (ArrayList<SpaceObject> newList) //method to join lists editable by different threads
+    {
+        if(doReset)
+        {
+            doReset = false;
+            objectsList.removeAll(objectsList);
+            objectsQueue.removeAll(objectsQueue);
+            repaint();
+        }
+        else
+        {
+            objectsList = newList;
+
+            if(queueSemaphore.tryAcquire())
+            {
+                for(int i=0; i<objectsQueue.size(); i++)
+                    objectsList.add(objectsQueue.get(i));
+
+                objectsQueue.removeAll(objectsQueue);
+                queueSemaphore.release();
+                repaint();  
+            }
+        }
+        return objectsList;
     }
 
     public void paintComponent(Graphics g)
@@ -43,40 +84,65 @@ public class SpaceMap extends JComponent
         for(int i=0; i<objectsList.size(); i++)
             objectsList.get(i).paintObject(g2, width, height, Xoffset, Yoffset);
 
+        for(int i=0; i<objectsQueue.size(); i++)
+            objectsQueue.get(i).paintObject(g2, width, height, Xoffset, Yoffset);
+
     }
 
-    class MapPanelListener implements MouseListener
+    class MapPanelListener implements MouseListener                     //to be synced
     {
         SpaceMap map;
         public MapPanelListener(SpaceMap map) {this.map=map;}
         public void mouseClicked(MouseEvent e) {}
         public void mousePressed(MouseEvent e)
         {
-            objectsList.add(new SpaceObject(DisplayConvert.XforXoY(e.getX(), getWidth()),
-                                            DisplayConvert.YforXoY(e.getY(), getHeight())));
+            queueSemaphore.acquireUninterruptibly();
+            
+            objectsQueue.add(new SpaceObject(DisplayConvert.XforXoY(e.getX(), getWidth()),
+                                             DisplayConvert.YforXoY(e.getY(), getHeight())));
             repaint();
         }
         public void mouseReleased(MouseEvent e)
         {
-            new ObjectSettingsFrame(map, objectsList, new Point(   DisplayConvert.XforPrint(objectsList.get(objectsList.size()-1).getXpos(), getWidth()),
-                                                                    DisplayConvert.YforPrint(objectsList.get(objectsList.size()-1).getYpos(), getHeight())));
+            switch(String.valueOf(myMenu.ObjType.getSelectedItem()))
+            {   
+                case "Planet":
+                            objectsQueue.set(objectsQueue.size()-1, new Planet( objectsQueue.get(objectsQueue.size()-1), 100));
+                            map.repaint();
+                break;
+                case "Star":
+                            map.repaint();
+                break;
+                case "Comet":
+                            map.repaint();
+                break;
+            }
+            queueSemaphore.release();
         }
         public void mouseEntered(MouseEvent e) {}
         public void mouseExited(MouseEvent e) {}
     }
 
-    class MapPanelDrag implements MouseMotionListener
+    class MapPanelDrag implements MouseMotionListener                     //to be synced
     {
         public void mouseDragged(MouseEvent e)
-        {
-            //reposition
-            objectsList.get(objectsList.size()-1).newXvel(DisplayConvert.XforXoY(e.getX(), getWidth()));
-            objectsList.get(objectsList.size()-1).newYvel(DisplayConvert.YforXoY(e.getY(), getHeight()));
+        {            
+            //queueSemaphore is already 'open'
+            objectsQueue.get(objectsQueue.size()-1).newXvel(DisplayConvert.XforXoY(e.getX(), getWidth()));
+            objectsQueue.get(objectsQueue.size()-1).newYvel(DisplayConvert.YforXoY(e.getY(), getHeight()));
 
             repaint();
         }
         public void mouseEntered(MouseEvent e) {}
         public void mouseExited(MouseEvent e) {}
         public void mouseMoved(MouseEvent e) {}
+    }
+
+    class ResetButtonListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+           doReset = true;
+        }
     }
 }

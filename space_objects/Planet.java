@@ -2,12 +2,15 @@ package space_objects;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.concurrent.*;
 
 import display.DisplayConvert;
 
-public class Planet extends SpaceObject
+public class Planet extends SpaceObject implements Cloneable
 {
     private int radius;
+
+    private Semaphore readFreeWriteOneRadi = new Semaphore(1,true);
 
     public Planet(SpaceObject obj, int R)
     {
@@ -15,15 +18,25 @@ public class Planet extends SpaceObject
         radius = R;
     }
 
-    public void setRadius(int R)
+    public Planet(Planet obj)
     {
-        if(R>0)
-            radius = R;
-        else
-            radius = 100;
+        super(obj);
+        radius = obj.radius; //ale radius jest prywatny 0.o
     }
 
-    public void paintObject(Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset)
+    public Planet clone() { return new Planet(this); }
+
+    public int getRadius () { return radius; }
+
+    public void setRadius(int R)
+    {
+        try {readFreeWriteOneRadi.acquire();}
+        catch(Exception e) {}
+        radius = R;
+        readFreeWriteOneRadi.release();
+    }
+
+    public synchronized void paintObject(Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset)
     {
         g2.setColor(Color.RED);
         g2.fill(new Ellipse2D.Double(   DisplayConvert.XforPrint(Xpos - 0.5*radius, panelWidth),

@@ -4,10 +4,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.awt.*;
 import java.awt.event.*;
+
 import space_objects.*;
-
-
-import space_objects.SpaceObject;
 
 @SuppressWarnings("serial")
 public class ObjectSettingsFrame extends JFrame
@@ -33,7 +31,7 @@ public class ObjectSettingsFrame extends JFrame
 
         Zastosuj.addActionListener(new ButtonListener(this));
 
-        String [] setupoptions = {"Planeta", "Gwiazda", "Kometa", "Gazowy olbrzym"};
+        String [] setupoptions = {"Planet", "Star", "Comet"};
         ObjType = new JComboBox<String>(setupoptions);
 
         GlobalPanel.add(ObjType);

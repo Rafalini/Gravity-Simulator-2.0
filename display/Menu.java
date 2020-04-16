@@ -3,6 +3,10 @@ package display;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.event.ChangeListener;
+
+import display.SpaceMap.ResetButtonListener;
+import gravity.GravityManager;
+
 import java.awt.event.*;
 import java.awt.*;
 import java.util.Hashtable;
@@ -12,16 +16,22 @@ public class Menu extends JPanel {
     public static final int width = 400;
     public static final int height = 1000;
 
+    GravityManager currentGravManager;
+    SpaceMap myMap;
+
     JPanel SliderPanel;
+    JComboBox<String> ObjType;
     JButton TimePlusButton, TimeMinusButton, ThreadPlusButton, ThreadMinusButton, MassPlusButton, MassMinusButton,
-            PresetCicrle, PresetSpiral, PresetFireworks, PresetGrid;
+            PresetCicrle, PresetSpiral, PresetFireworks, PresetGrid, ResetButton;
     JSlider TimeSlider, MassSlider, /*Presets->*/ PlanetsAmount, PlanetsSizeRandom, PlanetsInitialSpeed;
     JLabel  GeneralLabel, MassLabel, ThreadsLabel, TimeLabel;
     JTextField MassTextField, ThreadsTextField, TimeTextField;
     JTextArea LiveLog;
     Box GeneralBox;
 
-    int timevalue=0, threads=1, mass=0, mass_range=1000;
+    volatile boolean reset=false;
+
+    volatile int timevalue=0, threads=1, mass=0, mass_range=1000;
  
     public Menu()
     {
@@ -32,18 +42,69 @@ public class Menu extends JPanel {
         setTimeOptions();
         setThreadOptions();
         setMassOptions();
+        setObjTypePreset();
         setPresetButtons();
         setEventLog();
+        setMainButtons();
+    
         GeneralBox.add(Box.createVerticalStrut(10));
 
         this.add(GeneralBox);
     }
 
-    /*protected void paintComponent(Graphics g)
+    public void addResetListener(ResetButtonListener ls) {ResetButton.addActionListener(ls);}
+
+    public void addMap(SpaceMap map) {myMap=map;}
+
+    public int getTimeValue() {return timevalue;}
+
+    public int getThreadsValue() {return threads;}
+
+    public boolean tryReset()
+    { 
+        if(reset)
+        {
+            reset = false;
+            return true;
+        }
+        return false;
+    }
+
+    public void sendGravityManager(GravityManager manager)
     {
-        super.paintComponent(g);
-        //TimeLabel.repaint();
-    }*/
+        currentGravManager = manager;
+        new Thread(currentGravManager).start();
+    }
+
+    private void setMainButtons()
+    {
+        JPanel setMainButtons = new JPanel();
+        setMainButtons.setLayout(new BoxLayout(setMainButtons, BoxLayout.X_AXIS));
+        setMainButtons.setBorder(BorderFactory.createTitledBorder("Top1 buttons:"));
+
+        ResetButton = new JButton("Clear map");
+        //ResetButton.addActionListener(new ResetButtonListener());
+
+        setMainButtons.add(ResetButton);
+        GeneralBox.add(setMainButtons);
+        GeneralBox.add(Box.createVerticalStrut(10));
+    }
+
+    private void setObjTypePreset()
+    {
+        JPanel PresetsPanel = new JPanel();
+        JLabel preset = new JLabel("<html>Default object type that is created: <br/>'User' option sets indywidualny each object</html>");
+        PresetsPanel.setBorder(BorderFactory.createTitledBorder("  Space object to create:"));
+        PresetsPanel.setLayout(new BoxLayout(PresetsPanel, BoxLayout.X_AXIS));
+        String [] setupoptions = {"Planet", "Star", "Comet"};
+        ObjType = new JComboBox<String>(setupoptions);
+
+        PresetsPanel.add(preset);
+        PresetsPanel.add(ObjType);
+
+        GeneralBox.add(PresetsPanel);
+        GeneralBox.add(Box.createVerticalStrut(10));
+    }
 
     private void setTimeOptions()
     {           
@@ -55,7 +116,7 @@ public class Menu extends JPanel {
         TimeTextField = new JTextField("0     ");                                   
         TimeSlider = new JSlider(0, 20, 0);
 
-        TimePlusButton.addActionListener(new TimePlusListener());
+        TimePlusButton.addActionListener(new TimePlusListener(this));
         TimeMinusButton.addActionListener(new TimeMinusListener());
         TimeSlider.addChangeListener(new TimeSliderListener());
 
@@ -246,10 +307,18 @@ public class Menu extends JPanel {
         LiveLog.setCaretPosition(LiveLog.getDocument().getLength());
     }
 
+    public int threadValue() { return Integer.parseInt(ThreadsTextField.getText()); }
+
     class TimePlusListener implements ActionListener
     {
+        Menu myMenu;
+        TimePlusListener (Menu menu) {myMenu = menu;}
         public void actionPerformed(ActionEvent e)
         {
+            if(timevalue == 0)
+            {
+                    //new Thread(currentGravManager).start();
+            }
             timevalue++;
             TimeTextField.setText(" "+timevalue+" ");
             TimeSlider.setValue(timevalue);
@@ -278,7 +347,7 @@ public class Menu extends JPanel {
         public void actionPerformed(ActionEvent e)
         {
             threads++;
-            ThreadsTextField.setText(threads+" ");
+            ThreadsTextField.setText(String.valueOf(threads));
         }
     }
     class ThreadMinusListener implements ActionListener
@@ -287,7 +356,7 @@ public class Menu extends JPanel {
         {
             if(threads > 1)
                 threads--;
-            ThreadsTextField.setText(threads+" ");
+            ThreadsTextField.setText(String.valueOf(threads));
         }
     }
     class MassPlusListener implements ActionListener
