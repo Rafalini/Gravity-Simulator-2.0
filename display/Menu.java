@@ -22,16 +22,16 @@ public class Menu extends JPanel {
     JPanel SliderPanel;
     JComboBox<String> ObjType;
     JButton TimePlusButton, TimeMinusButton, ThreadPlusButton, ThreadMinusButton, MassPlusButton, MassMinusButton,
-            PresetCicrle, PresetSpiral, PresetFireworks, PresetGrid, ResetButton;
-    JSlider TimeSlider, MassSlider, /*Presets->*/ PlanetsAmount, PlanetsSizeRandom, PlanetsInitialSpeed;
-    JLabel  GeneralLabel, MassLabel, ThreadsLabel, TimeLabel;
-    JTextField MassTextField, ThreadsTextField, TimeTextField;
+            PresetCicrle, PresetSpiral, PresetFireworks, PresetGrid, ResetButton, RadiusPlusButton, RadiusMinusButton;
+    JSlider TimeSlider, MassSlider, /*Presets->*/ PlanetsAmount, PlanetsSizeRandom, PlanetsInitialSpeed, RadiusSlider;
+    JLabel  GeneralLabel, MassLabel, ThreadsLabel, TimeLabel, RadiusLabel;
+    JTextField MassTextField, ThreadsTextField, TimeTextField, RadiusTextField;
     JTextArea LiveLog;
     Box GeneralBox;
 
     volatile boolean reset=false;
-
-    volatile int timevalue=0, threads=1, mass=0, mass_range=1000;
+    final int mass_range=1000, radius_range=1000, time_limit = 300;
+    int timevalue=0, threads=1, mass=581, radius=60;
  
     public Menu()
     {
@@ -42,6 +42,7 @@ public class Menu extends JPanel {
         setTimeOptions();
         setThreadOptions();
         setMassOptions();
+        setSizeOptions();
         setObjTypePreset();
         setPresetButtons();
         setEventLog();
@@ -51,6 +52,10 @@ public class Menu extends JPanel {
 
         this.add(GeneralBox);
     }
+
+    public int getMassValue() {return mass;}
+
+    public int getRadiusValue() {return radius;}
 
     public void addResetListener(ResetButtonListener ls) {ResetButton.addActionListener(ls);}
 
@@ -114,7 +119,7 @@ public class Menu extends JPanel {
         TimeMinusButton = new JButton("Time--"); 
         TimeLabel = new JLabel("Actual Time: ");
         TimeTextField = new JTextField("0     ");                                   
-        TimeSlider = new JSlider(0, 20, 0);
+        TimeSlider = new JSlider(0, time_limit, 0);
 
         TimePlusButton.addActionListener(new TimePlusListener(this));
         TimeMinusButton.addActionListener(new TimeMinusListener());
@@ -182,7 +187,7 @@ public class Menu extends JPanel {
         MassPlusButton = new JButton("Mass++");
         MassMinusButton = new JButton("Mass--");
         MassLabel = new JLabel(" E20 [KG]");
-        MassTextField = new JTextField("580");
+        MassTextField = new JTextField(""+mass);
         MassSlider = new JSlider(0, mass_range, 1);
 
         MassPlusButton.addActionListener(new MassPlusListener());
@@ -211,13 +216,59 @@ public class Menu extends JPanel {
         labelTable2.put( mass_range/2, new JLabel("Mass in [KG]") );
         MassSlider.setLabelTable( labelTable2 );
         MassSlider.setPaintLabels(true);
-        MassSlider.setValue(580);
+        MassSlider.setValue(mass);
 
         SliderPanel = new JPanel(new GridLayout(1, 1, 0, 0));
         SliderPanel.add(MassSlider);
         MassBoxV.add(SliderPanel);
 
         GeneralBox.add(MassBoxV);
+        GeneralBox.add(Box.createVerticalStrut(20));
+    }
+
+    private void setSizeOptions()
+    {
+        Box RadiusBoxV = Box.createVerticalBox();
+        JPanel RadiusPanelH  = new JPanel();
+        RadiusPlusButton = new JButton("Radius++");
+        RadiusMinusButton = new JButton("Radius--");
+        RadiusLabel = new JLabel(" E2 [KM]");
+        RadiusTextField = new JTextField(""+radius);
+        RadiusSlider = new JSlider(0, radius_range, 1);
+
+        RadiusPlusButton.addActionListener(new RadiusPlusListener());
+        RadiusMinusButton.addActionListener(new RadiusMinusListener());
+        RadiusSlider.addChangeListener(new RadiusSliderListener());
+        RadiusTextField.addActionListener(new RadiusTextListener());
+
+        RadiusPanelH.setLayout(new BoxLayout(RadiusPanelH, BoxLayout.X_AXIS));
+
+        RadiusPanelH.add(RadiusMinusButton);
+        RadiusPanelH.add(Box.createHorizontalStrut(10));
+        RadiusPanelH.add(RadiusTextField);
+        RadiusPanelH.add(RadiusLabel);
+        RadiusPanelH.add(Box.createHorizontalStrut(10));
+        RadiusPanelH.add(RadiusPlusButton);
+
+        RadiusBoxV.add(RadiusPanelH);
+        RadiusBoxV.add(Box.createVerticalStrut(10));
+
+        RadiusSlider.setMinorTickSpacing(radius_range/100);
+        RadiusSlider.setMajorTickSpacing(radius_range/10);
+        RadiusSlider.setPaintTicks(true);
+
+        Hashtable<Integer,JLabel> labelTable2 = new Hashtable<>();
+        labelTable2.put( 0, new JLabel("0 KM") );
+        labelTable2.put( mass_range/2, new JLabel("Radius in [KM]") );
+        RadiusSlider.setLabelTable( labelTable2 );
+        RadiusSlider.setPaintLabels(true);
+        RadiusSlider.setValue(radius);
+
+        SliderPanel = new JPanel(new GridLayout(1, 1, 0, 0));
+        SliderPanel.add(RadiusSlider);
+        RadiusBoxV.add(SliderPanel);
+
+        GeneralBox.add(RadiusBoxV);
         GeneralBox.add(Box.createVerticalStrut(20));
     }
 
@@ -248,7 +299,7 @@ public class Menu extends JPanel {
 
         Hashtable<Integer,JLabel> PlanetsRandomLabel = new Hashtable<>();
         PlanetsRandomLabel.put( 0, new JLabel("0%") );
-        PlanetsRandomLabel.put( 50, new JLabel("Procentage ") );
+        PlanetsRandomLabel.put( 50, new JLabel("Random V") );
         PlanetsRandomLabel.put( 100, new JLabel("100%") );
         PlanetsSizeRandom.setLabelTable( PlanetsRandomLabel );
 
@@ -372,7 +423,8 @@ public class Menu extends JPanel {
     {
         public void actionPerformed(ActionEvent e)
         {
-            mass--;
+            if(mass > 0)
+                mass--;
             MassSlider.setValue(mass);
             MassTextField.setText(Integer.toString(MassSlider.getValue()));
         }
@@ -396,6 +448,47 @@ public class Menu extends JPanel {
             catch(NumberFormatException exc)
             {
                 mass = MassSlider.getValue();
+            }
+        }
+    }
+    class RadiusPlusListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            radius++;
+            RadiusSlider.setValue(radius);
+            RadiusTextField.setText(Integer.toString(RadiusSlider.getValue()));
+        }
+    }
+    class RadiusMinusListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            if(radius > 0)
+                radius--;
+            RadiusSlider.setValue(radius);
+            RadiusTextField.setText(Integer.toString(RadiusSlider.getValue()));
+        }
+    }
+    class RadiusSliderListener implements ChangeListener
+    {
+        public void stateChanged(ChangeEvent e)
+        {
+            radius = RadiusSlider.getValue();
+            RadiusTextField.setText(Integer.toString(RadiusSlider.getValue()));
+        }
+    }
+    class RadiusTextListener implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            try
+            { 
+                radius = Integer.parseInt(RadiusTextField.getText());
+            }
+            catch(NumberFormatException exc)
+            {
+                radius = RadiusSlider.getValue();
             }
         }
     }

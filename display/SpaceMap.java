@@ -86,7 +86,11 @@ public class SpaceMap extends JComponent
 
         for(int i=0; i<objectsQueue.size(); i++)
             objectsQueue.get(i).paintObject(g2, width, height, Xoffset, Yoffset);
-
+        if(objectsList.size() > 0)    
+        {
+            myMenu.printOnLog("last Vel: "+objectsList.get(objectsList.size()-1).getXvel()
+                                      +" "+objectsList.get(objectsList.size()-1).getYvel());
+        }
     }
 
     class MapPanelListener implements MouseListener                     //to be synced
@@ -97,26 +101,34 @@ public class SpaceMap extends JComponent
         public void mousePressed(MouseEvent e)
         {
             queueSemaphore.acquireUninterruptibly();
-            
-            objectsQueue.add(new SpaceObject(DisplayConvert.XforXoY(e.getX(), getWidth()),
-                                             DisplayConvert.YforXoY(e.getY(), getHeight())));
-            repaint();
-        }
-        public void mouseReleased(MouseEvent e)
-        {
+
             switch(String.valueOf(myMenu.ObjType.getSelectedItem()))
             {   
                 case "Planet":
-                            objectsQueue.set(objectsQueue.size()-1, new Planet( objectsQueue.get(objectsQueue.size()-1), 100));
+                            objectsQueue.add(new Planet( DisplayConvert.XforXoY(e.getX(), getWidth()),
+                                                         DisplayConvert.YforXoY(e.getY(), getHeight()), myMenu.getMassValue(), myMenu.getRadiusValue()));
+                            //myMenu.printOnLog("New Planet "+objectsQueue.get(objectsQueue.size()-1).getXpos()
+                            //                          +" "+ objectsQueue.get(objectsQueue.size()-1).getYpos());
                             map.repaint();
                 break;
                 case "Star":
+                            //objectsQueue.add(new Star( DisplayConvert.XforXoY(e.getX(), getWidth()),
+                            //                             DisplayConvert.YforXoY(e.getY(), getHeight()), myMenu.getMassValue(), 5));
                             map.repaint();
                 break;
                 case "Comet":
+                            //objectsQueue.add(new Comet( DisplayConvert.XforXoY(e.getX(), getWidth()),
+                            //                             DisplayConvert.YforXoY(e.getY(), getHeight()), myMenu.getMassValue(), 5));
                             map.repaint();
                 break;
             }
+
+            repaint();
+        }
+        public void mouseReleased(MouseEvent e) 
+        {
+            //myMenu.printOnLog("New Vel: "+objectsQueue.get(objectsQueue.size()-1).getXvel()
+            //                       +" "+ objectsQueue.get(objectsQueue.size()-1).getYvel());
             queueSemaphore.release();
         }
         public void mouseEntered(MouseEvent e) {}

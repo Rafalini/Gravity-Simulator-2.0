@@ -34,26 +34,42 @@ public class GravityManager extends Thread
             threads = myMenu.getThreadsValue();
             time = myMenu.getTimeValue();
 
-            ArrayList<ArrayList<SpaceObject>> fragments = splitList(newList, threads);
-            newListSem = new Semaphore(threads,true);
+//actions that impact quantity of space objects
+//impacts
+            for(int i=0; i<newList.size(); i++)
+                newList.get(i).performIteration();
 
-        if(time != 0){
-            myMenu.printOnLog("GM th: "+threads);
-
-            for(int i=0; i<threads; i++)
+            for(int i=0; i<newList.size()-1; i++)
             {
-                new Thread (new GravityThread(fragments.get(i), objectsList, newListSem, time, myMenu)).start();
+                for(int j=i+1; j<newList.size(); j++)
+                {
+                    if(SpaceObject.distance(newList.get(i), newList.get(j)) * 3 < newList.get(i).getRadius() + newList.get(j).getRadius())
+                    {
+                        newList.get(i).impact(newList.get(j));
+                        newList.remove(j);
+                        i = 0;
+                        j = 0;
+                    }
+                }
             }
-        }
-            newListSem.acquireUninterruptibly(threads);
+
+//main multi thread engine
+            if(time != 0)
+            {
+                ArrayList<ArrayList<SpaceObject>> fragments = splitList(newList, threads);
+                newListSem = new Semaphore(threads,true);
+
+                for(int i=0; i<threads; i++)
+                    new Thread (new GravityThread(fragments.get(i), objectsList, newListSem, time, myMenu)).start();
+                
+                 newListSem.acquireUninterruptibly(threads);
+            }
             objectsList = myMap.updateMergeGet(newList);
             myMap.repaint();
-
             long EndTime = System.nanoTime();
-
-            if( (EndTime-startTime)/1000000 < 500)
+            if( (EndTime-startTime)/1000000 < 50)
             {
-                try{TimeUnit.MILLISECONDS.sleep(1000);}catch(Exception e){};
+                try{TimeUnit.MILLISECONDS.sleep(50);}catch(Exception e){};
             }
         }
     }

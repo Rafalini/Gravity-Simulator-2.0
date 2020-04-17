@@ -45,7 +45,7 @@ public class ObjectSettingsFrame extends JFrame
         public ButtonListener(ObjectSettingsFrame fr) {frame = fr;}
         public void actionPerformed(ActionEvent e)
         {
-            objects.set(objects.size()-1, new Planet( objects.get(objects.size()-1), 100));
+            //objects.set(objects.size()-1, new Planet( objects.get(objects.size()-1)) );
             myMap.repaint();
             frame.dispose();
             //this.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
