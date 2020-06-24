@@ -3,6 +3,7 @@ package display;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.event.ChangeListener;
+import java.awt.Toolkit;
 
 import display.SpaceMap.ResetButtonListener;
 import gravity.GravityManager;
@@ -14,7 +15,7 @@ import java.util.Hashtable;
 @SuppressWarnings("serial") 
 public class Menu extends JPanel {
     public static final int width = 400;
-    public static final int height = 1000;
+    public static final int height = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()-100;
 
     GravityManager currentGravManager;
     SpaceMap myMap;
@@ -52,6 +53,8 @@ public class Menu extends JPanel {
 
         this.add(GeneralBox);
     }
+
+    public void setTime(int k) {timevalue=0;}
 
     public int getMassValue() {return mass;}
 

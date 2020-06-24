@@ -15,10 +15,10 @@ import space_objects.*;
 @SuppressWarnings("serial")
 public class SpaceMap extends JComponent
 {   
-    public static int width = 1500;
-    public static int height = 1000;
+    public static int width = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth()-400;
+    public static int height = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()-100;
 
-    private int Xoffset=0;
+    private int Xoffset=0; //for map movement
     private int Yoffset=0;
 
     Dimension  screenDim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -47,7 +47,7 @@ public class SpaceMap extends JComponent
         myMenu.addResetListener(ls);
     }
 
-    public synchronized ArrayList<SpaceObject> updateMergeGet (ArrayList<SpaceObject> newList) //method to join lists editable by different threads
+    public ArrayList<SpaceObject> updateMergeGet (ArrayList<SpaceObject> newList) //method to join lists editable by different threads
     {
         if(doReset)
         {
@@ -80,20 +80,21 @@ public class SpaceMap extends JComponent
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                             RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(Color.BLACK);
-        g2.fillRect(0,0,getHeight()+1000,getWidth()+1000);
+        g2.fillRect(0,0,getWidth(), getHeight());
         for(int i=0; i<objectsList.size(); i++)
-            objectsList.get(i).paintObject(g2, width, height, Xoffset, Yoffset);
+            objectsList.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset);
 
         for(int i=0; i<objectsQueue.size(); i++)
-            objectsQueue.get(i).paintObject(g2, width, height, Xoffset, Yoffset);
-        if(objectsList.size() > 0)    
+            objectsQueue.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset);
+
+        if(objectsList.size() > 0 && myMenu.getTimeValue() != 0)    
         {
-            myMenu.printOnLog("last Vel: "+objectsList.get(objectsList.size()-1).getXvel()
-                                      +" "+objectsList.get(objectsList.size()-1).getYvel());
+            myMenu.printOnLog("last Vel: "+(int)objectsList.get(objectsList.size()-1).getXvel()
+                                      +" "+(int)objectsList.get(objectsList.size()-1).getYvel());
         }
     }
 
-    class MapPanelListener implements MouseListener                     //to be synced
+    class MapPanelListener implements MouseListener  
     {
         SpaceMap map;
         public MapPanelListener(SpaceMap map) {this.map=map;}

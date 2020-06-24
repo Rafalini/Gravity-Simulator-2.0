@@ -2,12 +2,15 @@ package space_objects;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.HashMap;
 
 import display.DisplayConvert;
 import display.shapes.Arrow;
 
 public class Planet extends SpaceObject implements Cloneable
 {
+    HashMap<Long, Double> neighbors; //id, range - to spaceobj with this id
+
     public Planet (int x, int y, int mass, int radius)
     {
         super(x,y,mass,radius);
@@ -18,6 +21,17 @@ public class Planet extends SpaceObject implements Cloneable
     }
 
     public Planet clone() { return new Planet(this); }
+
+    public void setNeighbors(HashMap<Long, Double> newNeighbors) {neighbors = newNeighbors;}
+
+    public void impact()
+    {
+        
+    }
+    public void performIteration()
+    {
+
+    }
 
     public synchronized void paintObject(Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset)
     {

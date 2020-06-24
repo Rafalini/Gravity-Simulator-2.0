@@ -10,10 +10,10 @@ public class Main extends JPanel {
 	public static void main(String[] args) {
 		new Arrow();
 		SwingUtilities.invokeLater(()->{
-			Main sizingTest = new Main();
+			Main mainpanel = new Main();
 			JFrame frame = new JFrame("Grav Sim 2.0");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.add(sizingTest);
+			frame.add(mainpanel);
 			frame.pack();
 			frame.setLocationRelativeTo(null);
 			frame.setVisible(true);

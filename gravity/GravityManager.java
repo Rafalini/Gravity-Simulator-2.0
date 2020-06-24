@@ -5,6 +5,7 @@ import java.util.concurrent.*;
 
 import display.*;
 import space_objects.SpaceObject;
+import constants.*;
 
 public class GravityManager extends Thread
 {
@@ -29,29 +30,37 @@ public class GravityManager extends Thread
         for(;;)
         {
             long startTime = System.nanoTime();
-
-            ArrayList<SpaceObject> newList = cloneList(objectsList);
-            threads = myMenu.getThreadsValue();
-            time = myMenu.getTimeValue();
-
 //actions that impact quantity of space objects
-//impacts
-            for(int i=0; i<newList.size(); i++)
-                newList.get(i).performIteration();
 
-            for(int i=0; i<newList.size()-1; i++)
+            for(int i=0; i<objectsList.size(); i++)
+                objectsList.get(i).performIteration();
+//impacts
+            for(int i=0; i<objectsList.size()-1; i++)
             {
-                for(int j=i+1; j<newList.size(); j++)
-                {
-                    if(SpaceObject.distance(newList.get(i), newList.get(j)) * 3 < newList.get(i).getRadius() + newList.get(j).getRadius())
-                    {
-                        newList.get(i).impact(newList.get(j));
-                        newList.remove(j);
+                for(int j=i+1; j<objectsList.size(); j++)
+                {       //distance <= R - r  --> radius on drawing is diameter, so r/2
+                    if(SpaceObject.distance(objectsList.get(i), objectsList.get(j)) <= Constants.RadiusOnImpact*Math.max(objectsList.get(i).getRadius()/2, objectsList.get(j).getRadius()/2))
+                    {   //get heavier planet
+                        if(objectsList.get(i).getMass() >= objectsList.get(j).getMass() )
+                        {
+                            objectsList.get(i).impact(objectsList.get(j));
+                            objectsList.remove(j);
+                        }
+                        else
+                        {
+                            objectsList.get(j).impact(objectsList.get(i));
+                            objectsList.remove(i);
+                        }
                         i = 0;
                         j = 0;
                     }
                 }
             }
+
+            ArrayList<SpaceObject> newList = cloneList(objectsList);
+            threads = myMenu.getThreadsValue();
+            time = myMenu.getTimeValue();
+
 
 //main multi thread engine
             if(time != 0)

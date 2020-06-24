@@ -40,16 +40,17 @@ public class GravityThread extends Thread
                 {
                     double square_range = Math.pow( datalist.get(j).getXpos() - editable.get(i).getXpos(), 2)+
                                           Math.pow( datalist.get(j).getYpos() - editable.get(i).getYpos(), 2);
-                    myMenu.printOnLog(square_range+"");
+
                     dxVel  += G * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
                             * (datalist.get(j).getXpos() - editable.get(i).getXpos()) /Math.sqrt(square_range);
 
-                     dyVel  += G * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
+                    dyVel  += G * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
                             * (datalist.get(j).getYpos() - editable.get(i).getYpos()) /Math.sqrt(square_range);
                 }
+            //editable.
             editable.get(i).updateXvel(dxVel);
             editable.get(i).updateYvel(dyVel);
-            editable.get(i).updatePos();
+            editable.get(i).updatePos(time);
         }
 
         editableSem.release();

@@ -3,6 +3,8 @@ package space_objects;
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicLong;
+import java.lang.Math;
 
 import display.DisplayConvert;
 import display.shapes.Arrow;
@@ -10,6 +12,9 @@ import constants.Constants;
 
 public class SpaceObject implements SpacePrintable
 {
+    private static AtomicLong idCounter = new AtomicLong(0); //unique ID generator 
+    protected Long objectId;        //unique ID
+
     protected double Xpos, Ypos;
     protected double Xvel, Yvel;
     protected int Mass=0;             //can be 0
@@ -24,20 +29,23 @@ public class SpaceObject implements SpacePrintable
 
     public SpaceObject (int x, int y, int mass, int radius)
     {
+        objectId = idCounter.addAndGet(1);
         Xpos = x;  Ypos = y;
         Xvel = 0; Yvel = 0;
         this.Mass = mass;
         this.radius = radius;
     }
 
-    public SpaceObject (SpaceObject obj)
+    public SpaceObject (SpaceObject obj) //for clonning
     {
+        objectId = obj.getObjId();
         Xpos = obj.getXpos();  Ypos = obj.getYpos();
         Mass = obj.getMass();  radius = obj.getRadius();
         Xvel = obj.getXvel();  Yvel = obj.getYvel();
     }
 
     public SpaceObject clone() { return new SpaceObject(this); }
+    public long getObjId() {return objectId;}
     
 //getters - each getter takes one permit (from Integer.MAX_VALUE), multiple (Integer.MAX_VALUE) reads are available at the time
     public final double getXpos ()
@@ -134,18 +142,25 @@ public class SpaceObject implements SpacePrintable
         Yvel += Vy; readFreeWriteOneYvel.release(Integer.MAX_VALUE);
     }
 
-    public synchronized void updatePos()
+    public synchronized void updatePos(int time)
     {
-        newXpos( getXpos() + Constants.k*getXvel() );
-        newYpos( getYpos() + Constants.k*getYvel() );
+        newXpos( getXpos() + Constants.VelFactor*getXvel()*time );
+        newYpos( getYpos() + Constants.VelFactor*getYvel()*time );
     }
 
     public void performIteration() {}
 
     public void impact(SpaceObject obj)
     {
-        Mass += obj.getMass();
-        radius += obj.getRadius()/2;
+        int massOfThisInAMomment = (int)(this.Mass + obj.Mass*(1-Constants.Mloss));
+        this.Xpos = (this.Xpos*this.Mass + obj.getXpos()*obj.getMass())/ massOfThisInAMomment;
+        this.Ypos = (this.Ypos*this.Mass + obj.getYpos()*obj.getMass())/ massOfThisInAMomment;
+        this.Xvel = (this.Xvel*this.Mass + obj.getXvel()*obj.getMass())/ massOfThisInAMomment;
+        this.Yvel = (this.Yvel*this.Mass + obj.getYvel()*obj.getMass())/ massOfThisInAMomment;
+        this.radius = (int)(Math.sqrt( Math.pow(this.radius,2)
+                                     + Math.pow(obj.getRadius(),2)) );
+
+        this.Mass = massOfThisInAMomment;
     }
 
 //only one printer can be called at a time
