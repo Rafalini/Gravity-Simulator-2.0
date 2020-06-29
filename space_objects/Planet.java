@@ -7,6 +7,8 @@ import java.util.HashMap;
 import display.DisplayConvert;
 import display.shapes.Arrow;
 
+//Basic extension of SpaceObject, extends SpaceObject only by specyfic painting function.
+
 public class Planet extends SpaceObject implements Cloneable
 {
     HashMap<Long, Double> neighbors; //id, range - to spaceobj with this id

@@ -10,7 +10,15 @@ import gravity.GravityManager;
 import java.util.ArrayList;
 
 import space_objects.*;
-//import gravity.*;
+
+//Main map to draw planets, objects etc, with synchronization on update method.
+//Main object list is provided to paint, if user has created something in meanwhile
+//new objects will be added, if user is still crating this objects wont be added. After
+//update ThreadManager calls paint() method to referesh view.
+
+//When user creates new object there is a lock that is unlocked only when user finishes creating.
+//Only then created objects can be added to complete object list and influence other objects.
+
 
 @SuppressWarnings("serial")
 public class SpaceMap extends JComponent

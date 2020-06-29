@@ -10,6 +10,10 @@ import display.DisplayConvert;
 import display.shapes.Arrow;
 import constants.Constants;
 
+//Basic draft of space object, contains position, mass, getters and setters and painting information.
+//Class is thread safe, everyone can read anytime, but only one can write and locks that value while writting,
+//that it cant be read while writting.
+
 public class SpaceObject implements SpacePrintable
 {
     private static AtomicLong idCounter = new AtomicLong(0); //unique ID generator 

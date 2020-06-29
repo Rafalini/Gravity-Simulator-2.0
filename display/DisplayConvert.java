@@ -1,5 +1,6 @@
 package display;
 
+//To convert from XoY where (0,0) is in the middle to window XoY, where (0,0) is in left upper corner, and Y is reversed.
 public class DisplayConvert {
 
     public static final int XforPrint(int X, int width)  {return  X + (int)(0.5*width); }

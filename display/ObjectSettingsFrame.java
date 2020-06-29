@@ -7,6 +7,8 @@ import java.awt.event.*;
 
 import space_objects.*;
 
+//unused for now
+
 @SuppressWarnings("serial")
 public class ObjectSettingsFrame extends JFrame
 {

@@ -7,9 +7,13 @@ import space_objects.*;
 import display.*;
 import constants.Constants;
 
+//Single thread that calculates next position for some given amount of objects against all.
+//Becouse its square complexity problem every single object is influenced by all other. Thread
+//has two lists, one complete list of all objects and other, smaller list of objects to update.
+
 public class GravityThread extends Thread
 {
-    final double G = 0.00002;
+    //final double G = 0.00002;
     ArrayList<SpaceObject> editable;
     ArrayList<SpaceObject> datalist;
     Semaphore editableSem;
@@ -20,11 +24,11 @@ public class GravityThread extends Thread
                    final ArrayList<SpaceObject> datalist, Semaphore sem, int time, Menu myMenu)
     {
         editableSem = sem;
-        editableSem.acquireUninterruptibly();
-        this.editable = editable;
-        this.datalist = datalist;
-        this.time = time;
-        this.myMenu = myMenu;
+        editableSem.acquireUninterruptibly();   //lock on editable list, un locked when calculations and edition is finished
+        this.editable = editable;       //list of objects to update
+        this.datalist = datalist;       //list of all objects
+        this.time = time;               //time step
+        this.myMenu = myMenu;           //
     }
 
     public void run()
@@ -36,15 +40,15 @@ public class GravityThread extends Thread
             double dyVel = 0;
             for(int j=0; j<datalist.size(); j++)
                 if( Math.pow(Double.compare(datalist.get(j).getXpos(),editable.get(i).getXpos()), 2) +
-                    Math.pow(Double.compare(datalist.get(j).getYpos(),editable.get(i).getYpos()), 2) != 0)
+                    Math.pow(Double.compare(datalist.get(j).getYpos(),editable.get(i).getYpos()), 2) != 0)      //if its not the same obj, if distance != 0 go calculate
                 {
                     double square_range = Math.pow( datalist.get(j).getXpos() - editable.get(i).getXpos(), 2)+
                                           Math.pow( datalist.get(j).getYpos() - editable.get(i).getYpos(), 2);
 
-                    dxVel  += G * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
+                    dxVel  += Constants.G_graviti_const * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
                             * (datalist.get(j).getXpos() - editable.get(i).getXpos()) /Math.sqrt(square_range);
 
-                    dyVel  += G * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
+                    dyVel  += Constants.G_graviti_const * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
                             * (datalist.get(j).getYpos() - editable.get(i).getYpos()) /Math.sqrt(square_range);
                 }
             //editable.

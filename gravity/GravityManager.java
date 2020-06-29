@@ -7,6 +7,9 @@ import display.*;
 import space_objects.SpaceObject;
 import constants.*;
 
+//Main thread
+//Splits tasks on multiple threads to calculate gravity influence, calls update() and repaint() in infinite loop.
+
 public class GravityManager extends Thread
 {
     Menu myMenu;
@@ -39,7 +42,8 @@ public class GravityManager extends Thread
             {
                 for(int j=i+1; j<objectsList.size(); j++)
                 {       //distance <= R - r  --> radius on drawing is diameter, so r/2
-                    if(SpaceObject.distance(objectsList.get(i), objectsList.get(j)) <= Constants.RadiusOnImpact*Math.max(objectsList.get(i).getRadius()/2, objectsList.get(j).getRadius()/2))
+                    if(SpaceObject.distance(objectsList.get(i), objectsList.get(j)) <=
+                        Constants.RadiusOnImpact*Math.max(objectsList.get(i).getRadius()/2, objectsList.get(j).getRadius()/2))
                     {   //get heavier planet
                         if(objectsList.get(i).getMass() >= objectsList.get(j).getMass() )
                         {
@@ -51,35 +55,34 @@ public class GravityManager extends Thread
                             objectsList.get(j).impact(objectsList.get(i));
                             objectsList.remove(i);
                         }
-                        i = 0;
+                        i = 0;  //for unordered object list one colision may effect in other colisions, so it has to be checked again
                         j = 0;
                     }
                 }
             }
-
+//create copy of list, that copy will be split into smaller lists for threads.
             ArrayList<SpaceObject> newList = cloneList(objectsList);
             threads = myMenu.getThreadsValue();
             time = myMenu.getTimeValue();
 
 
 //main multi thread engine
-            if(time != 0)
+            if(time != 0) //if action not paused, then go:
             {
                 ArrayList<ArrayList<SpaceObject>> fragments = splitList(newList, threads);
                 newListSem = new Semaphore(threads,true);
-
+//create and start threads
                 for(int i=0; i<threads; i++)
                     new Thread (new GravityThread(fragments.get(i), objectsList, newListSem, time, myMenu)).start();
-                
+//wait for threads to complete their tasks, then merge all lists    
                  newListSem.acquireUninterruptibly(threads);
             }
-            objectsList = myMap.updateMergeGet(newList);
+            objectsList = myMap.updateMergeGet(newList);    //update current list for calculations and send it to paint
             myMap.repaint();
+//time elapsed:            
             long EndTime = System.nanoTime();
-            if( (EndTime-startTime)/1000000 < 50)
-            {
-                try{TimeUnit.MILLISECONDS.sleep(50);}catch(Exception e){};
-            }
+            if( (EndTime-startTime)/1000000 < 50)   //if calculations are fast, dont calculate too oftem, to avoid increasment in time elapse
+                try{TimeUnit.MILLISECONDS.sleep(50);}catch(Exception e){}; //too oftem caltulations = faster animation -> faster time elapse
         }
     }
 
@@ -93,16 +96,13 @@ public class GravityManager extends Thread
     public ArrayList<ArrayList<SpaceObject>> splitList(ArrayList<SpaceObject> newList, int lists)
     {
         ArrayList<ArrayList<SpaceObject>> fragments = new ArrayList<ArrayList<SpaceObject>>();
-
         int listlength = newList.size()/lists;
 
         for(int i=0; i<lists; i++)
         {
             fragments.add(new ArrayList<SpaceObject>());
             for(int j=0; j<listlength; j++)
-            {
                 fragments.get(i).add(newList.get(i*listlength+j));
-            }
         }
 
         if(newList.size() > lists*listlength)

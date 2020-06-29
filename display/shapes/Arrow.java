@@ -27,17 +27,8 @@ public class Arrow {
                                     DisplayConvert.YforPrint(y1, height), 
                                     DisplayConvert.XforPrint(x2, width),
                                     DisplayConvert.YforPrint(y2, height)));
-        if(y1 == y2)
+        if(y1 == y2)    //vertical arrow
         {
-            /*g2.draw(new Line2D.Double(  DisplayConvert.XforPrint(x2, width),
-                                        DisplayConvert.YforPrint(y2, height),
-                                        DisplayConvert.XforPrint(Xs, width),
-                                        DisplayConvert.YforPrint(Ys+ W*D, height)));
-            g2.draw(new Line2D.Double(  DisplayConvert.XforPrint(x2, width),
-                                        DisplayConvert.YforPrint(y2, height),
-                                        DisplayConvert.XforPrint(Xs, width),
-                                        DisplayConvert.YforPrint(Ys- W*D, height)));*/
-
             int [] xcoord = {(int) DisplayConvert.XforPrint(x2, width),
                              (int) DisplayConvert.XforPrint(Xs, width),
                              (int) DisplayConvert.XforPrint(Xs, width)};
@@ -45,20 +36,15 @@ public class Arrow {
                              (int) DisplayConvert.YforPrint(Ys+ W*D, height),
                              (int) DisplayConvert.YforPrint(Ys- W*D, height)};
             g2.fillPolygon(xcoord, ycoord, 3);
-        } else {
+        }
+        else 
+        {
             double M = (double)(x2 - x1)/(double)(y2 - y1);
             double Xp1 =  Xs + W*D *Math.sqrt( 1/(Math.pow(M,2) + 1) );
             double Yp1 =  M*(Xs - Xp1) + Ys;
             double Xp2 =  Xs - W*D *Math.sqrt( 1/(Math.pow(M,2) + 1) );
             double Yp2 =  M*(Xs - Xp2) + Ys;
-            /*g2.draw(new Line2D.Double(  DisplayConvert.XforPrint(x2, width),
-                                        DisplayConvert.YforPrint(y2, height),
-                                        DisplayConvert.XforPrint(Xp1, width),
-                                        DisplayConvert.YforPrint(Yp1, height)));
-            g2.draw(new Line2D.Double(  DisplayConvert.XforPrint(x2, width),
-                                        DisplayConvert.YforPrint(y2, height),
-                                        DisplayConvert.XforPrint(Xp2, width),
-                                        DisplayConvert.YforPrint(Yp2, height)));*/
+           
             int [] xcoord = {(int) DisplayConvert.XforPrint(x2, width),
                              (int) DisplayConvert.XforPrint(Xp1, width),
                              (int) DisplayConvert.XforPrint(Xp2, width)};

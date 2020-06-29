@@ -12,6 +12,10 @@ import java.awt.event.*;
 import java.awt.*;
 import java.util.Hashtable;
 
+
+//Main menu, panel with all buttons, layout, button listeners etc
+
+
 @SuppressWarnings("serial") 
 public class Menu extends JPanel {
     public static final int width = 400;

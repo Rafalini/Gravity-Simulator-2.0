@@ -5,6 +5,8 @@ import display.shapes.*;
 import java.awt.*;
 import javax.swing.*;
 
+//Main class to start, create frame and initiate and all elements
+
 @SuppressWarnings("serial") 
 public class Main extends JPanel {
 	public static void main(String[] args) {
