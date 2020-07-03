@@ -50,11 +50,13 @@ public class GravityThread extends Thread
 
                     dyVel  += Constants.G_graviti_const * time * datalist.get(j).getMass() * Constants.Mfactor / square_range
                             * (datalist.get(j).getYpos() - editable.get(i).getYpos()) /Math.sqrt(square_range);
+                    //myMenu.printOnLog("range:  "+square_range+ " it: " +j);
                 }
+            //myMenu.printOnLog("dX:  "+dxVel+ " dY: " +dyVel);
             //editable.
             editable.get(i).updateXvel(dxVel);
             editable.get(i).updateYvel(dyVel);
-            editable.get(i).updatePos(time);
+            editable.get(i).updatePos(time*Constants.StepFactor);
         }
 
         editableSem.release();

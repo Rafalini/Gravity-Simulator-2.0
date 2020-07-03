@@ -7,10 +7,12 @@ import java.awt.Toolkit;
 
 import display.SpaceMap.ResetButtonListener;
 import gravity.GravityManager;
+import space_objects.*;
 
 import java.awt.event.*;
 import java.awt.*;
 import java.util.Hashtable;
+import java.util.ArrayList;
 
 
 //Main menu, panel with all buttons, layout, button listeners etc
@@ -19,7 +21,7 @@ import java.util.Hashtable;
 @SuppressWarnings("serial") 
 public class Menu extends JPanel {
     public static final int width = 400;
-    public static final int height = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()-100;
+    public static final int height = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()-200;
 
     GravityManager currentGravManager;
     SpaceMap myMap;
@@ -35,7 +37,7 @@ public class Menu extends JPanel {
     Box GeneralBox;
 
     volatile boolean reset=false;
-    final int mass_range=1000, radius_range=1000, time_limit = 300;
+    final int mass_range=10000, radius_range=500, time_limit = 300;
     int timevalue=0, threads=1, mass=581, radius=60;
  
     public Menu()
@@ -47,14 +49,16 @@ public class Menu extends JPanel {
         setTimeOptions();
         setThreadOptions();
         setMassOptions();
-        setSizeOptions();
+        //setSizeOptions();
         setObjTypePreset();
         setPresetButtons();
         setEventLog();
         setMainButtons();
+
+        printOnLog("Screen Width:  "+(int)Toolkit.getDefaultToolkit().getScreenSize().getWidth());
+        printOnLog("Screen Height: "+(int)Toolkit.getDefaultToolkit().getScreenSize().getHeight());
     
         GeneralBox.add(Box.createVerticalStrut(10));
-
         this.add(GeneralBox);
     }
 
@@ -367,6 +371,8 @@ public class Menu extends JPanel {
 
     public int threadValue() { return Integer.parseInt(ThreadsTextField.getText()); }
 
+    public String choosenObjectType()  { return ObjType.getSelectedItem().toString(); }
+
     class TimePlusListener implements ActionListener
     {
         Menu myMenu;
@@ -502,7 +508,19 @@ public class Menu extends JPanel {
     class PresetCirclesListener implements ActionListener
     {
         public void actionPerformed(ActionEvent e)
-        {}
+        {
+            ArrayList<SpaceObject> newList = new ArrayList<SpaceObject>();
+            double planets_in_row = Math.sqrt(PlanetsAmount.getValue());
+            int Xdistance = getWidth()/(int)planets_in_row;
+            int Ydistance = getHeight()/(int)planets_in_row;
+            
+            for(int i=0; i<planets_in_row; i++)                 //Y: 0 |  X: 0-------> 1000
+            for(int j=0; j<planets_in_row+1; j++)               //     |             #
+            {                                                   //1000 v  ############      
+                //newList.add(new Planet());
+            }
+            myMap.updateMergeGet(newList);
+        }
     }
     class PresetSpiralListener implements ActionListener
     {

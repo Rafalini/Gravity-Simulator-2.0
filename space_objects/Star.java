@@ -9,30 +9,24 @@ import display.shapes.Arrow;
 
 //Basic extension of SpaceObject, extends SpaceObject only by specyfic painting function.
 
-public class Planet extends SpaceObject implements Cloneable
+public class Star extends SpaceObject implements Cloneable
 {
     HashMap<Long, Double> neighbors; //id, range - to spaceobj with this id
 
-    public Planet (int x, int y, int mass, int radius)
+    public Star (int x, int y, int mass, int radius)
     {
         super(x,y,mass,radius);
     }
-    public Planet (int x, int y, int Vx, int Vy, int mass, int radius)
-    {
-        super(x,y,mass,radius);
-        Xvel = Vx;
-        Yvel = Vy;
-    }
-    public Planet(Planet obj)
+    public Star(Star obj)
     {
         super(obj);
     }
-    public Planet(SpaceObject obj)
+    public Star(SpaceObject obj)
     {
         super(obj);
     }
 
-    public Planet clone() { return new Planet(this); }
+    public Star clone() { return new Star(this); }
 
     public void setNeighbors(HashMap<Long, Double> newNeighbors) {neighbors = newNeighbors;}
 
@@ -52,7 +46,7 @@ public class Planet extends SpaceObject implements Cloneable
              Zoom = 1/Zoom;
         switch(mode)
         {
-            case 0:         g2.setColor(Color.RED);
+            case 0:         g2.setColor(Color.YELLOW);
                             g2.fill(new Ellipse2D.Double(   DisplayConvert.XforPrint(Xpos - 0.5*radius, panelWidth, Xoffset, Zoom),
                                                             DisplayConvert.YforPrint(Ypos + 0.5*radius, panelHeight, Yoffset, Zoom), radius*Zoom, radius*Zoom));
             break;

@@ -29,18 +29,28 @@ public class SpaceMap extends JComponent
     private int Xoffset=0; //for map movement
     private int Yoffset=0;
 
+    private int oldXoffset=0; //for map movement
+    private int oldYoffset=0;
+
+    private int XoffsetBegin=0; //for map movement
+    private int YoffsetBegin=0;
+
+    private double zoom_amount=1;
+
     Dimension  screenDim = Toolkit.getDefaultToolkit().getScreenSize();
 
     Menu myMenu;
+    UpperPanel upperPanel;
 
     volatile Boolean doReset=false;
     Semaphore queueSemaphore = new Semaphore(1);
     ArrayList<SpaceObject> objectsList;  //for ready, printable, read-onlny objects (no semaphore on it)
     ArrayList<SpaceObject> objectsQueue; //for objects in creation, to avoid printing unready object
 
-    public SpaceMap (Menu madeMenu)
+    public SpaceMap (final Menu madeMenu, final UpperPanel upperPanel)
     {
         this.myMenu = madeMenu;
+        this.upperPanel = upperPanel;
 
         objectsList  = new ArrayList<SpaceObject>();    //editable only by GravityManager thread
         objectsQueue = new ArrayList<SpaceObject>();    //editable only by swing thread
@@ -48,14 +58,15 @@ public class SpaceMap extends JComponent
         myMenu.sendGravityManager(new GravityManager(myMenu, this, objectsList));
 
         setPreferredSize(new Dimension(width,height));
-        this.addMouseListener(new MapPanelListener(this));
+        this.addMouseListener(new MapPanelListener());
         this.addMouseMotionListener(new MapPanelDrag());
+        this.addMouseWheelListener(new MapZoom());
         this.setLayout(null);
-        ResetButtonListener ls = new ResetButtonListener();
+        final ResetButtonListener ls = new ResetButtonListener();
         myMenu.addResetListener(ls);
     }
 
-    public ArrayList<SpaceObject> updateMergeGet (ArrayList<SpaceObject> newList) //method to join lists editable by different threads
+    public ArrayList<SpaceObject> updateMergeGet (final ArrayList<SpaceObject> newList) //method to join lists editable by different threads
     {
         if(doReset)
         {
@@ -81,89 +92,156 @@ public class SpaceMap extends JComponent
         return objectsList;
     }
 
-    public void paintComponent(Graphics g)
+    public void paint(final Graphics g)
     {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                            RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(Color.BLACK);
-        g2.fillRect(0,0,getWidth(), getHeight());
+        int mode=0;
+        double Zoom = Math.abs(zoom_amount);
+        if(zoom_amount<0)
+            Zoom = 1/Zoom;
+        final Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        
+//Background
+        if(upperPanel.isDesignMode())
+        {
+            g2.setColor(Color.WHITE);
+            mode = 1;
+            g2.fillRect(0,0, getWidth(), getHeight());
+            drawDesignView(g2);
+        }
+        else
+        {
+            g2.setColor(Color.BLACK);
+            mode = 0;
+            g2.fillRect(0,0, getWidth(), getHeight());
+        }
+
+
         for(int i=0; i<objectsList.size(); i++)
-            objectsList.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset);
+            objectsList.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset, Zoom, mode);
 
         for(int i=0; i<objectsQueue.size(); i++)
-            objectsQueue.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset);
+            objectsQueue.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset, Zoom, mode);
 
-        if(objectsList.size() > 0 && myMenu.getTimeValue() != 0)    
-        {
-            myMenu.printOnLog("last Vel: "+(int)objectsList.get(objectsList.size()-1).getXvel()
-                                      +" "+(int)objectsList.get(objectsList.size()-1).getYvel());
-        }
+        // if(objectsList.size() > 0 && myMenu.getTimeValue() != 0)    
+        // {
+        //     myMenu.printOnLog("last Vel: "+(int)objectsList.get(objectsList.size()-1).getXvel()
+        //                               +" "+(int)objectsList.get(objectsList.size()-1).getYvel());
+        // }
     }
 
     class MapPanelListener implements MouseListener  
     {
-        SpaceMap map;
-        public MapPanelListener(SpaceMap map) {this.map=map;}
-        public void mouseClicked(MouseEvent e) {}
-        public void mousePressed(MouseEvent e)
+        public void mouseClicked(final MouseEvent e) {}
+        public void mousePressed(final MouseEvent e)
         {
-            queueSemaphore.acquireUninterruptibly();
-
-            switch(String.valueOf(myMenu.ObjType.getSelectedItem()))
-            {   
-                case "Planet":
-                            objectsQueue.add(new Planet( DisplayConvert.XforXoY(e.getX(), getWidth()),
-                                                         DisplayConvert.YforXoY(e.getY(), getHeight()), myMenu.getMassValue(), myMenu.getRadiusValue()));
-                            //myMenu.printOnLog("New Planet "+objectsQueue.get(objectsQueue.size()-1).getXpos()
-                            //                          +" "+ objectsQueue.get(objectsQueue.size()-1).getYpos());
-                            map.repaint();
-                break;
-                case "Star":
-                            //objectsQueue.add(new Star( DisplayConvert.XforXoY(e.getX(), getWidth()),
-                            //                             DisplayConvert.YforXoY(e.getY(), getHeight()), myMenu.getMassValue(), 5));
-                            map.repaint();
-                break;
-                case "Comet":
-                            //objectsQueue.add(new Comet( DisplayConvert.XforXoY(e.getX(), getWidth()),
-                            //                             DisplayConvert.YforXoY(e.getY(), getHeight()), myMenu.getMassValue(), 5));
-                            map.repaint();
-                break;
+            myMenu.printOnLog("Hand: "+upperPanel.isHandModeActive());
+            if(upperPanel.isHandModeActive())
+            {
+                XoffsetBegin = e.getX();
+                YoffsetBegin = e.getY();
+                oldXoffset = Xoffset;
+                oldYoffset = Yoffset;
             }
+            else
+            {
+                double Zoom = Math.abs(zoom_amount);
+                if(zoom_amount<0)
+                    Zoom = 1/Zoom;
 
-            repaint();
+                queueSemaphore.acquireUninterruptibly();
+                
+                objectsQueue.add(new SpaceObject( (int)DisplayConvert.XforXoY(e.getX(), getWidth(), Xoffset, Zoom),
+                                                  (int)DisplayConvert.YforXoY(e.getY(), getHeight(), Yoffset, Zoom), myMenu.getMassValue(), (int)Math.sqrt(myMenu.getMassValue())));
+                repaint();
+            }
         }
-        public void mouseReleased(MouseEvent e) 
+        public void mouseReleased(final MouseEvent e) 
         {
-            //myMenu.printOnLog("New Vel: "+objectsQueue.get(objectsQueue.size()-1).getXvel()
-            //                       +" "+ objectsQueue.get(objectsQueue.size()-1).getYvel());
-            queueSemaphore.release();
+            if(upperPanel.isHandModeActive())
+            {
+                Xoffset = e.getX() - XoffsetBegin + oldXoffset;
+                Yoffset = YoffsetBegin - e.getY() + oldYoffset;
+            }
+            else
+            {
+                switch(myMenu.choosenObjectType())
+                {
+                    case "Planet":
+                        objectsQueue.add(   new Planet  (   objectsQueue.get(objectsQueue.size()-1)    ));
+                    break;
+                    case "Star":
+                        objectsQueue.add(   new Star    (   objectsQueue.get(objectsQueue.size()-1)    ));
+                    break;
+                    case "Comet":
+                        //objectsQueue.add(   new Comet  (   objectsQueue.get(objectsQueue.size()-1)    )));
+                    break;
+                }
+                objectsQueue.remove(objectsQueue.size()-2);
+                queueSemaphore.release();
+            }
         }
-        public void mouseEntered(MouseEvent e) {}
-        public void mouseExited(MouseEvent e) {}
+        public void mouseEntered(final MouseEvent e) {}
+        public void mouseExited(final MouseEvent e) {}
     }
 
-    class MapPanelDrag implements MouseMotionListener                     //to be synced
+    class MapPanelDrag implements MouseMotionListener 
     {
-        public void mouseDragged(MouseEvent e)
-        {            
-            //queueSemaphore is already 'open'
-            objectsQueue.get(objectsQueue.size()-1).newXvel(DisplayConvert.XforXoY(e.getX(), getWidth()));
-            objectsQueue.get(objectsQueue.size()-1).newYvel(DisplayConvert.YforXoY(e.getY(), getHeight()));
+        public void mouseDragged(final MouseEvent e)
+        {    
+            if(upperPanel.isHandModeActive())
+            {
+                Xoffset = e.getX() - XoffsetBegin + oldXoffset;
+                Yoffset = YoffsetBegin - e.getY() + oldYoffset;
+            }
+            else
+            {        
+                double Zoom = Math.abs(zoom_amount);
+                if(zoom_amount<0)
+                    Zoom = 1/Zoom;
+                //queueSemaphore is already 'open'
+                objectsQueue.get(objectsQueue.size()-1).newXvel(DisplayConvert.XforXoY(e.getX(), getWidth(), Xoffset, Zoom));
+                objectsQueue.get(objectsQueue.size()-1).newYvel(DisplayConvert.YforXoY(e.getY(), getHeight(), Yoffset, Zoom));
 
-            repaint();
+                repaint();
+            }
         }
-        public void mouseEntered(MouseEvent e) {}
-        public void mouseExited(MouseEvent e) {}
-        public void mouseMoved(MouseEvent e) {}
+        public void mouseEntered(final MouseEvent e) {}
+        public void mouseExited(final MouseEvent e) {}
+        public void mouseMoved(final MouseEvent e) {}
+    }
+
+    class MapZoom implements MouseWheelListener
+    {
+        public void mouseWheelMoved(final MouseWheelEvent e)
+        {
+            zoom_amount -= 0.1*e.getPreciseWheelRotation();
+            if(zoom_amount>0 && zoom_amount<1)
+                zoom_amount=-1;
+            else if(zoom_amount>-1 && zoom_amount<0)
+                zoom_amount=1;
+                myMenu.printOnLog("Zoom: "+zoom_amount);
+        }
     }
 
     class ResetButtonListener implements ActionListener
     {
-        public void actionPerformed(ActionEvent e)
+        public void actionPerformed(final ActionEvent e)
         {
            doReset = true;
         }
+    }
+
+    private void drawDesignView(final Graphics2D g2)
+    {
+        g2.setColor(Color.BLACK);
+        g2.drawLine(0, getHeight()/2, getWidth(), getHeight()/2);
+        g2.drawLine(getWidth()/2, 0, getWidth()/2, getHeight());
+        for(int i=0; i<1; i++)
+        {}
+        for(int i=0; i<1; i++)
+        {}
     }
 }

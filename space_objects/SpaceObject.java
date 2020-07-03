@@ -22,7 +22,7 @@ public class SpaceObject implements SpacePrintable
     protected double Xpos, Ypos;
     protected double Xvel, Yvel;
     protected int Mass=0;             //can be 0
-    protected int radius=5;           //range of direct influence
+    protected int radius;             //range of direct influence
 
     private Semaphore readFreeWriteOneXpos = new Semaphore(Integer.MAX_VALUE,true);
     private Semaphore readFreeWriteOneYpos = new Semaphore(Integer.MAX_VALUE,true);
@@ -146,7 +146,7 @@ public class SpaceObject implements SpacePrintable
         Yvel += Vy; readFreeWriteOneYvel.release(Integer.MAX_VALUE);
     }
 
-    public synchronized void updatePos(int time)
+    public synchronized void updatePos(double time)
     {
         newXpos( getXpos() + Constants.VelFactor*getXvel()*time );
         newYpos( getYpos() + Constants.VelFactor*getYvel()*time );
@@ -168,18 +168,27 @@ public class SpaceObject implements SpacePrintable
     }
 
 //only one printer can be called at a time
-    public synchronized void paintObject  (Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset)
+    public synchronized void paintObject  (Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset, double zoom_amount, int mode)
     {
-        g2.setColor(Color.WHITE);
-        g2.draw(new Ellipse2D.Double(   DisplayConvert.XforPrint(Xpos - 5*radius, panelWidth),
-                                        DisplayConvert.YforPrint(Ypos + 5*radius, panelHeight), 10*radius, 10*radius));
+        double Zoom = Math.abs(zoom_amount);
+        if(zoom_amount<0)
+             Zoom = 1/Zoom;
+        switch(mode)
+        {
+            case 0:         g2.setColor(Color.WHITE);  break;
+            case 1:         g2.setColor(Color.BLACK); break;
+            case 2:         g2.setColor(Color.RED); break;
+        }
+        g2.draw(new Ellipse2D.Double(   DisplayConvert.XforPrint(Xpos - 0.5*radius, panelWidth, Xoffset, Zoom),
+                                        DisplayConvert.YforPrint(Ypos + 0.5*radius, panelHeight, Yoffset, Zoom), radius*Zoom, radius*Zoom));
                                         
-        Arrow.printArrow(g2, (int)Xpos, (int)Ypos, (int)(Xpos+Xvel), (int)(Ypos+Yvel), panelWidth, panelHeight);
+        Arrow.printArrow(g2, (int)(Xpos), (int)(Ypos), (int)(Xpos+Xvel), (int)(Ypos+Yvel), panelWidth, panelHeight, Xoffset, Yoffset, Zoom, mode);
 
-        g2.fill(new Ellipse2D.Double(   DisplayConvert.XforPrint(Xpos - radius, panelWidth),
-                                        DisplayConvert.YforPrint(Ypos + radius, panelHeight), 2*radius, 2*radius));
+        g2.setColor(new Color(63,216, 212));
+        g2.fill(new Ellipse2D.Double(   DisplayConvert.XforPrint(Xpos - 0.5*10*Zoom, panelWidth, Xoffset, Zoom),
+                                        DisplayConvert.YforPrint(Ypos + 0.5*10*Zoom, panelHeight, Yoffset, Zoom), 10*Zoom, 10*Zoom));
     }
-    public synchronized void paintHighlight(Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset){}
+    public synchronized void paintHighlight(Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset, double Zoom, int mode){}
 
     public static double distance(SpaceObject obj1, SpaceObject obj2)
     {
