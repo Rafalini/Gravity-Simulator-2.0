@@ -46,6 +46,7 @@ public class SpaceMap extends JComponent
     Semaphore queueSemaphore = new Semaphore(1);
     ArrayList<SpaceObject> objectsList;  //for ready, printable, read-onlny objects (no semaphore on it)
     ArrayList<SpaceObject> objectsQueue; //for objects in creation, to avoid printing unready object
+    ArrayList<Star> starList;
 
     public SpaceMap (final Menu madeMenu, final UpperPanel upperPanel)
     {
@@ -64,21 +65,26 @@ public class SpaceMap extends JComponent
         this.setLayout(null);
         final ResetButtonListener ls = new ResetButtonListener();
         myMenu.addResetListener(ls);
-    }
 
-    public ArrayList<SpaceObject> updateMergeGet (final ArrayList<SpaceObject> newList) //method to join lists editable by different threads
+        this.myMenu.addMap(this);
+    }
+    public ArrayList<SpaceObject> getObjectsList() {return objectsList;}
+    public ArrayList<SpaceObject> updateMergeGet (final ArrayList<SpaceObject> newList, final ArrayList<Star> starList) //method to join lists editable by different threads
     {
         if(doReset)
         {
             doReset = false;
             objectsList.removeAll(objectsList);
             objectsQueue.removeAll(objectsQueue);
+            starList.removeAll(starList);
+            SpaceObject.resetID();
             repaint();
         }
         else
         {
             objectsList = newList;
-
+            this.starList = starList;
+            
             if(queueSemaphore.tryAcquire())
             {
                 for(int i=0; i<objectsQueue.size(); i++)
@@ -101,8 +107,7 @@ public class SpaceMap extends JComponent
             Zoom = 1/Zoom;
         final Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        
+    
 //Background
         if(upperPanel.isDesignMode())
         {
@@ -118,9 +123,11 @@ public class SpaceMap extends JComponent
             g2.fillRect(0,0, getWidth(), getHeight());
         }
 
+        for(int i=0; i<starList.size(); i++)
+            starList.get(i).printLight(g2);
 
         for(int i=0; i<objectsList.size(); i++)
-            objectsList.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset, Zoom, mode);
+                objectsList.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset, Zoom, mode);
 
         for(int i=0; i<objectsQueue.size(); i++)
             objectsQueue.get(i).paintObject(g2, getWidth(), getHeight(), Xoffset, Yoffset, Zoom, mode);
@@ -132,12 +139,17 @@ public class SpaceMap extends JComponent
         // }
     }
 
+    public void mergeObjectLists(ArrayList<SpaceObject> newlist)
+    {
+        for(int i=0; i<newlist.size(); i++)
+            objectsList.add(newlist.get(i));
+    }
+
     class MapPanelListener implements MouseListener  
     {
         public void mouseClicked(final MouseEvent e) {}
         public void mousePressed(final MouseEvent e)
         {
-            myMenu.printOnLog("Hand: "+upperPanel.isHandModeActive());
             if(upperPanel.isHandModeActive())
             {
                 XoffsetBegin = e.getX();
@@ -244,4 +256,9 @@ public class SpaceMap extends JComponent
         for(int i=0; i<1; i++)
         {}
     }
+
+    public Dimension getMapSize() {return new Dimension(getWidth(), getHeight());}
+    public int getXoffset() {return Xoffset;}
+    public int getYoffset() {return Yoffset;}
+    public double getZoom() {return zoom_amount;}
 }

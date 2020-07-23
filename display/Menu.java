@@ -11,9 +11,7 @@ import space_objects.*;
 
 import java.awt.event.*;
 import java.awt.*;
-import java.util.Hashtable;
-import java.util.ArrayList;
-
+import java.util.*;
 
 //Main menu, panel with all buttons, layout, button listeners etc
 
@@ -325,13 +323,13 @@ public class Menu extends JPanel {
         PresetGrid.addActionListener(new PresetGridListener());
         PresetFireworks.addActionListener(new PresetFireworksListener());
 
+        VpresetBox.add(PresetFireworks);
+        VpresetBox.add(Box.createVerticalStrut(20));
         VpresetBox.add(PresetCicrle);
         VpresetBox.add(Box.createVerticalStrut(20));
         VpresetBox.add(PresetSpiral);
         VpresetBox.add(Box.createVerticalStrut(20));
         VpresetBox.add(PresetGrid);
-        VpresetBox.add(Box.createVerticalStrut(20));
-        VpresetBox.add(PresetFireworks);
         VpresetBox.add(Box.createVerticalStrut(20));
 
         PresetsPanel.add(VpresetBox);
@@ -509,17 +507,7 @@ public class Menu extends JPanel {
     {
         public void actionPerformed(ActionEvent e)
         {
-            ArrayList<SpaceObject> newList = new ArrayList<SpaceObject>();
-            double planets_in_row = Math.sqrt(PlanetsAmount.getValue());
-            int Xdistance = getWidth()/(int)planets_in_row;
-            int Ydistance = getHeight()/(int)planets_in_row;
-            
-            for(int i=0; i<planets_in_row; i++)                 //Y: 0 |  X: 0-------> 1000
-            for(int j=0; j<planets_in_row+1; j++)               //     |             #
-            {                                                   //1000 v  ############      
-                //newList.add(new Planet());
-            }
-            myMap.updateMergeGet(newList);
+
         }
     }
     class PresetSpiralListener implements ActionListener
@@ -530,7 +518,26 @@ public class Menu extends JPanel {
     class PresetGridListener implements ActionListener
     {
         public void actionPerformed(ActionEvent e)
-        {}
+        {
+            ArrayList<SpaceObject> myList = new ArrayList<SpaceObject>();
+            double planets_in_row = Math.sqrt(PlanetsAmount.getValue());
+            Dimension mapSize = myMap.getMapSize();
+
+            int Xdistance = (int)(mapSize.getWidth()/planets_in_row);
+            int Ydistance = (int)(mapSize.getHeight()/planets_in_row);
+
+            printOnLog("planets: "+planets_in_row);
+
+            myList.add(new Star(0,0,0,0, MassSlider.getValue()*10, (int)Math.sqrt(MassSlider.getValue()*10)));
+            
+            for(int i=0; i<planets_in_row; i++)                 //Y: 0 |  X: 0-------> 1000
+            for(int j=0; j<planets_in_row+1; j++)               //     |             #
+            {                                                   //1000 v  ############      
+                myList.add(new Planet((int)(90+i*Xdistance-0.5*mapSize.getWidth()), (int)(50+j*Ydistance-0.5*mapSize.getHeight()),    //Xpos, Ypos
+                                        0,0, (int)(MassSlider.getValue()*0.5), (int)Math.sqrt(MassSlider.getValue()*0.5)));     //Xvel, Yvel, Mass, Radius
+            }
+            myMap.mergeObjectLists(myList);
+        }
     }
     class PresetFireworksListener implements ActionListener
     {

@@ -17,20 +17,22 @@ public class Arrow {
     {
         //double D = Math.sqrt( Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) );
         double D = 7; //height of triangle
-        double H = 1 - 20 / (Math.sqrt( Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2))); //height to general length ratio in order to use vector addition
+        double H = 1 - 20 / (Math.sqrt( Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2))); //adjust H of top triangle, based on arrow length
         double W = 1; 
-        double Xs = (x1 + H * (x2 - x1)),     Ys = (y1 + H * (y2 - y1));
+        double Xs = (x1 + H * (x2 - x1)),     Ys = (y1 + H * (y2 - y1));    // (arrow begin) + H*(arrow length) -> Xs,Ys, bottom of triangle on top of arrow
 
         double zoom = Math.abs(zoom_amount);
         if(zoom_amount<0)
              zoom = 1/zoom;
 
-        switch(mode)
+        /*switch(mode)
         {
             case 0:         g2.setColor(Color.BLUE);  break;
             case 1:         g2.setColor(new Color(63,216, 212)); break;
             case 2:         g2.setColor(Color.RED); break;
-        }
+        }*/
+        //g2.setColor(Color.BLUE);
+        g2.setColor(new Color(63,216, 212));
         g2.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.draw(new Line2D.Double(  DisplayConvert.XforPrint(x1, width, xoffset, zoom), 
                                     DisplayConvert.YforPrint(y1, height, yoffset, zoom), 
@@ -45,6 +47,8 @@ public class Arrow {
                              (int) DisplayConvert.YforPrint(Ys+ W*D, height, yoffset, zoom),
                              (int) DisplayConvert.YforPrint(Ys- W*D, height, yoffset, zoom)};
             g2.fillPolygon(xcoord, ycoord, 3);
+            g2.setColor(Color.BLACK);
+            g2.drawString("("+(x2-x1)+", "+(y2-y1)+")",xcoord[0], ycoord[0]);
         }
         else 
         {
@@ -61,6 +65,8 @@ public class Arrow {
                              (int) DisplayConvert.YforPrint(Yp1, height, yoffset, zoom),
                              (int) DisplayConvert.YforPrint(Yp2, height, yoffset, zoom)};
             g2.fillPolygon(xcoord, ycoord, 3);
+            g2.setColor(Color.BLACK);
+            g2.drawString("("+(x2-x1)+", "+(y2-y1)+")",xcoord[0], ycoord[0]);
          }
         g2.setStroke(new BasicStroke(1));
     }

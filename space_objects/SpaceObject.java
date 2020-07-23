@@ -4,10 +4,11 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
+
 import java.lang.Math;
 
 import display.DisplayConvert;
-import display.shapes.Arrow;
+import display.shapes.*;
 import constants.Constants;
 
 //Basic draft of space object, contains position, mass, getters and setters and painting information.
@@ -30,6 +31,9 @@ public class SpaceObject implements SpacePrintable
     private Semaphore readFreeWriteOneYvel = new Semaphore(Integer.MAX_VALUE,true);
     private Semaphore readFreeWriteOneMass = new Semaphore(Integer.MAX_VALUE,true);
     private Semaphore readFreeWriteOneRadi = new Semaphore(Integer.MAX_VALUE,true);
+
+    public static void resetID() { idCounter.set(0);}
+    public long getID() {return objectId;}
 
     public SpaceObject (int x, int y, int mass, int radius)
     {
@@ -190,8 +194,25 @@ public class SpaceObject implements SpacePrintable
     }
     public synchronized void paintHighlight(Graphics2D g2, int panelWidth, int panelHeight, int Xoffset, int Yoffset, double Zoom, int mode){}
 
-    public static double distance(SpaceObject obj1, SpaceObject obj2)
+    public static double objectDistance(SpaceObject obj1, SpaceObject obj2)
     {
-        return Math.sqrt( Math.pow(obj1.getXpos()-obj2.getXpos(), 2) + Math.pow(obj1.getYpos()-obj2.getYpos(), 2));
+        return Math.hypot(obj1.getXpos()-obj2.getXpos(), obj1.getYpos()-obj2.getYpos());
+    }
+
+    public Wall getRayPoints(int star_xpos, int star_ypos)
+    {
+        if((int)Ypos == star_ypos)
+            return new Wall(new Dimension((int)Xpos,(int)(Ypos+0.5*radius)),
+                            new Dimension((int)Xpos,(int)(Ypos-0.5*radius)));
+        else
+        {
+            double M = (double)(star_xpos - Xpos/(double)(Ypos-star_ypos)); //-1/m
+            double den = Math.pow(M,2)+1;
+            double sqr = Math.pow((radius/2)*M,2)+Math.pow((radius/2),2)-Math.pow(M*Xpos,2);
+            double x1 = (Xpos+Math.sqrt(sqr))/den;
+            double x2 = (Xpos-Math.sqrt(sqr))/den;
+            return new Wall(new Dimension((int)x1, (int)(M*x1+Ypos)),
+                            new Dimension((int)x2, (int)(M*x2+Ypos)));
+        }
     }
 }
